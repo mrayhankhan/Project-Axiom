@@ -1,0 +1,112 @@
+[
+    {
+        "id": "q1",
+        "question": "What features contribute most to bias risk?",
+        "expected_answer_contains": [
+            "age",
+            "zip code",
+            "disparate impact"
+        ],
+        "expected_risk_category": "bias",
+        "expected_min_confidence": 0.7
+    },
+    {
+        "id": "q2",
+        "question": "What assumptions could break in production?",
+        "expected_answer_contains": [
+            "feature freshness",
+            "distribution",
+            "economic conditions"
+        ],
+        "expected_risk_category": "deployment",
+        "expected_min_confidence": 0.7
+    },
+    {
+        "id": "q3",
+        "question": "What is the model's AUC performance?",
+        "expected_answer_contains": [
+            "0.847",
+            "AUC"
+        ],
+        "expected_risk_category": "data",
+        "expected_min_confidence": 0.8
+    },
+    {
+        "id": "q4",
+        "question": "Which geographic areas show fairness concerns?",
+        "expected_answer_contains": [
+            "Mississippi",
+            "Louisiana",
+            "rural"
+        ],
+        "expected_risk_category": "bias",
+        "expected_min_confidence": 0.7
+    },
+    {
+        "id": "q5",
+        "question": "What are the model's limitations for thin credit files?",
+        "expected_answer_contains": [
+            "6 months",
+            "limited predictive power",
+            "AUC"
+        ],
+        "expected_risk_category": "data",
+        "expected_min_confidence": 0.7
+    },
+    {
+        "id": "q6",
+        "question": "What monitoring metrics are in place?",
+        "expected_answer_contains": [
+            "weekly",
+            "AUC",
+            "PSI",
+            "fairness"
+        ],
+        "expected_risk_category": "deployment",
+        "expected_min_confidence": 0.6
+    },
+    {
+        "id": "q7",
+        "question": "How does the model handle economic stress scenarios?",
+        "expected_answer_contains": [
+            "recession",
+            "unemployment",
+            "untested"
+        ],
+        "expected_risk_category": "deployment",
+        "expected_min_confidence": 0.6
+    },
+    {
+        "id": "q8",
+        "question": "What is the disparate impact ratio for age groups?",
+        "expected_answer_contains": [
+            "0.85",
+            "21-30",
+            "31-45"
+        ],
+        "expected_risk_category": "bias",
+        "expected_min_confidence": 0.7
+    },
+    {
+        "id": "q9",
+        "question": "What are the top 3 most important features?",
+        "expected_answer_contains": [
+            "credit score",
+            "debt-to-income",
+            "income"
+        ],
+        "expected_risk_category": "explainability",
+        "expected_min_confidence": 0.8
+    },
+    {
+        "id": "q10",
+        "question": "What is the model retraining schedule?",
+        "expected_answer_contains": [
+            "quarterly",
+            "AUC",
+            "drift"
+        ],
+        "expected_risk_category": "deployment",
+        "expected_min_confidence": 0.7
+    }
+]
