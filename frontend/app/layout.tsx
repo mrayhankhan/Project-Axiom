@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/Sidebar";
+import ClientLayout from "@/components/ClientLayout";
+import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme-provider";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "Axiom - Model Risk Intelligence",
@@ -16,14 +18,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={inter.className}>
-        <div className="flex h-screen overflow-hidden bg-background">
-          <Sidebar />
-          <main className="flex-1 overflow-y-auto">
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans antialiased bg-surface-a10 dark:bg-surface-a20 text-text-primary`} suppressHydrationWarning>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ClientLayout>
             {children}
-          </main>
-        </div>
+          </ClientLayout>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

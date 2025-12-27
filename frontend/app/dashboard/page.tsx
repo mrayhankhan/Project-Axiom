@@ -1,206 +1,276 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import {
-    BarChart3,
-    FileText,
-    AlertTriangle,
-    CheckCircle,
-    ArrowUpRight,
-    BrainCircuit
-} from "lucide-react";
-import { api, SystemMetrics } from "@/lib/api";
-import { RiskBadge } from "@/components/RiskBadge";
+import React from 'react';
+import { MetricCard } from '@/components/ui/card';
+import { FileText, Database, Brain, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
-export default function DashboardPage() {
-    const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchMetrics = async () => {
-            try {
-                const data = await api.getMetrics();
-                setMetrics(data);
-            } catch (error) {
-                console.error("Failed to fetch metrics:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchMetrics();
-    }, []);
-
-    if (loading) {
-        return (
-            <div className="flex h-full items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            </div>
-        );
-    }
-
-    const stats = [
-        {
-            name: "Total Questions",
-            value: metrics?.total_questions || 0,
-            icon: BrainCircuit,
-            change: "+12%",
-            changeType: "increase",
-        },
-        {
-            name: "Avg Confidence",
-            value: `${((metrics?.avg_confidence || 0) * 100).toFixed(1)}%`,
-            icon: CheckCircle,
-            change: "+2.1%",
-            changeType: "increase",
-        },
-        {
-            name: "Evidence Coverage",
-            value: `${((metrics?.avg_evidence_coverage || 0) * 100).toFixed(1)}%`,
-            icon: FileText,
-            change: "+4.5%",
-            changeType: "increase",
-        },
-        {
-            name: "Risk Alerts",
-            value: "3",
-            icon: AlertTriangle,
-            change: "-1",
-            changeType: "decrease",
-        },
-    ];
-
+export default function Dashboard() {
     return (
-        <div className="p-8 space-y-8">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-                <p className="text-muted-foreground">
-                    Overview of model risk intelligence and governance status.
-                </p>
+        <div className="space-y-6">
+            {/* Summary Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                <MetricCard
+                    label="Total Documents"
+                    value="2,847"
+                    change="+12% this month"
+                    trend="up"
+                    icon={<FileText className="w-5 h-5" />}
+                />
+                <MetricCard
+                    label="Indexed Vectors"
+                    value="1.2M"
+                    change="+8% this week"
+                    trend="up"
+                    icon={<Database className="w-5 h-5" />}
+                />
+                <MetricCard
+                    label="Active Models"
+                    value="14"
+                    change="2 pending review"
+                    trend="neutral"
+                    icon={<Brain className="w-5 h-5" />}
+                />
+                <MetricCard
+                    label="Avg. Latency"
+                    value="124ms"
+                    change="-5% improvement"
+                    trend="down"
+                    icon={<Clock className="w-5 h-5" />}
+                />
+                <MetricCard
+                    label="Risk Alerts"
+                    value="3"
+                    change="2 critical"
+                    trend="up"
+                    icon={<AlertTriangle className="w-5 h-5" />}
+                />
+                <MetricCard
+                    label="Monthly Tokens"
+                    value="2.4M"
+                    change="+18% vs last month"
+                    trend="up"
+                    icon={<TrendingUp className="w-5 h-5" />}
+                />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {stats.map((stat) => (
-                    <div
-                        key={stat.name}
-                        className="rounded-xl border border-border bg-card p-6 shadow-sm"
-                    >
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-muted-foreground">
-                                    {stat.name}
-                                </p>
-                                <p className="text-2xl font-bold text-foreground mt-2">
-                                    {stat.value}
-                                </p>
-                            </div>
-                            <div className="rounded-full bg-primary/10 p-3 text-primary">
-                                <stat.icon className="h-5 w-5" />
-                            </div>
-                        </div>
-                        <div className="mt-4 flex items-center text-xs">
-                            <span className="text-green-500 font-medium flex items-center">
-                                {stat.change}
-                                <ArrowUpRight className="h-3 w-3 ml-1" />
-                            </span>
-                            <span className="text-muted-foreground ml-2">from last month</span>
-                        </div>
-                    </div>
-                ))}
+            {/* Time Range Selector and Quick Actions */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                    <Button variant="secondary" size="sm">Last 7 days</Button>
+                    <Button variant="tertiary" size="sm">Last 30 days</Button>
+                    <Button variant="tertiary" size="sm">Last 90 days</Button>
+                    <Button variant="tertiary" size="sm">Custom</Button>
+                </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <div className="col-span-4 rounded-xl border border-border bg-card p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="font-semibold text-foreground">Risk Category Distribution</h3>
-                        <Link href="/analytics" className="text-sm text-primary hover:underline">
-                            View details
-                        </Link>
+            {/* Charts and Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Traffic Chart */}
+                <div className="lg:col-span-2 bg-surface-a10 dark:bg-surface-a20 rounded-lg border border-surface-a30 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold text-text-primary">Query Volume</h3>
+                        <Badge variant="success" size="sm">Live</Badge>
                     </div>
-                    <div className="space-y-4">
-                        {Object.entries(metrics?.risk_category_distribution || {}).map(([category, count]) => {
-                            const total = metrics?.total_questions || 1;
-                            const percentage = Math.round((count / total) * 100);
-
-                            return (
-                                <div key={category} className="space-y-2">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <div className="flex items-center">
-                                            <RiskBadge category={category} />
-                                        </div>
-                                        <span className="text-muted-foreground">{count} queries ({percentage}%)</span>
-                                    </div>
-                                    <div className="h-2 w-full rounded-full bg-secondary">
-                                        <div
-                                            className="h-2 rounded-full bg-primary"
-                                            style={{ width: `${percentage}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            );
-                        })}
-                        {(!metrics?.risk_category_distribution || Object.keys(metrics.risk_category_distribution).length === 0) && (
-                            <div className="text-center py-8 text-muted-foreground">
-                                No data available yet. Start asking questions in the Intelligence tab.
-                            </div>
-                        )}
+                    <div className="h-64 flex items-end justify-between gap-2">
+                        {[45, 52, 48, 65, 72, 68, 80, 75, 85, 78, 90, 88, 95, 92].map((height, i) => (
+                            <div
+                                key={i}
+                                className="flex-1 bg-primary-a20 rounded-t hover:bg-primary-a30 transition-colors cursor-pointer"
+                                style={{ height: `${height}%` }}
+                            />
+                        ))}
+                    </div>
+                    <div className="flex justify-between mt-2 text-xs text-text-muted">
+                        <span>Mon</span>
+                        <span>Tue</span>
+                        <span>Wed</span>
+                        <span>Thu</span>
+                        <span>Fri</span>
+                        <span>Sat</span>
+                        <span>Sun</span>
                     </div>
                 </div>
 
-                <div className="col-span-3 rounded-xl border border-border bg-card p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="font-semibold text-foreground">Recent Activity</h3>
-                        <Link href="/intelligence" className="text-sm text-primary hover:underline">
-                            View all
-                        </Link>
+                {/* System Health */}
+                <div className="bg-surface-a10 dark:bg-surface-a20 rounded-lg border border-surface-a30 p-6">
+                    <h3 className="font-semibold text-text-primary mb-4">System Health</h3>
+                    <div className="space-y-4">
+                        <HealthItem label="FAISS Index" status="healthy" value="99.9%" />
+                        <HealthItem label="Ingestion Queue" status="healthy" value="2 jobs" />
+                        <HealthItem label="API Gateway" status="healthy" value="Active" />
+                        <HealthItem label="Vector Store" status="warning" value="85% capacity" />
+                        <HealthItem label="Embedding Service" status="healthy" value="Online" />
                     </div>
-                    <div className="space-y-6">
-                        <div className="relative border-l border-border pl-6 pb-6 last:pb-0">
-                            <div className="absolute -left-1.5 top-0 h-3 w-3 rounded-full border border-border bg-background" />
-                            <div className="flex flex-col gap-1">
-                                <span className="text-sm font-medium text-foreground">
-                                    New Model Card Uploaded
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                    2 hours ago by Sarah Chen
-                                </span>
-                            </div>
-                        </div>
-                        <div className="relative border-l border-border pl-6 pb-6 last:pb-0">
-                            <div className="absolute -left-1.5 top-0 h-3 w-3 rounded-full border border-border bg-background" />
-                            <div className="flex flex-col gap-1">
-                                <span className="text-sm font-medium text-foreground">
-                                    Bias Audit Completed
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                    5 hours ago • Found 2 risks
-                                </span>
-                            </div>
-                        </div>
-                        <div className="relative border-l border-border pl-6 pb-6 last:pb-0">
-                            <div className="absolute -left-1.5 top-0 h-3 w-3 rounded-full border border-border bg-background" />
-                            <div className="flex flex-col gap-1">
-                                <span className="text-sm font-medium text-foreground">
-                                    Validation Report Approved
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                    Yesterday by Michael Torres
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+            </div>
 
-                    <div className="mt-6 pt-6 border-t border-border">
-                        <Link
-                            href="/documents"
-                            className="flex w-full items-center justify-center rounded-md bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/80"
-                        >
-                            Upload New Document
-                        </Link>
+            {/* Risk Matrix and Recent Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Risk Matrix */}
+                <div className="bg-surface-a10 dark:bg-surface-a20 rounded-lg border border-surface-a30 p-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="font-semibold text-text-primary">Risk Matrix</h3>
+                        <Button variant="tertiary" size="sm">View All</Button>
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <RiskCell level="low" count={42} label="Low Impact / Low Probability" />
+                        <RiskCell level="medium" count={18} label="High Impact / Low Probability" />
+                        <RiskCell level="medium" count={12} label="Low Impact / High Probability" />
+                        <RiskCell level="critical" count={3} label="High Impact / High Probability" />
+                    </div>
+                </div>
+
+                {/* Recent Activity */}
+                <div className="bg-surface-a10 dark:bg-surface-a20 rounded-lg border border-surface-a30 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold text-text-primary">Recent Activity</h3>
+                        <Button variant="tertiary" size="sm">View All</Button>
+                    </div>
+                    <div className="space-y-3">
+                        <ActivityItem
+                            action="Evaluation completed"
+                            details="Model 'Claims v2' - Accuracy: 94.2%"
+                            user="Sarah Chen"
+                            time="5 min ago"
+                        />
+                        <ActivityItem
+                            action="Documents indexed"
+                            details="15 PDFs added to knowledge base"
+                            user="System"
+                            time="12 min ago"
+                        />
+                        <ActivityItem
+                            action="Risk alert created"
+                            details="Model drift detected on 'Underwriting AI'"
+                            user="John Doe"
+                            time="1 hour ago"
+                            alert
+                        />
+                        <ActivityItem
+                            action="Policy updated"
+                            details="Model retention policy changed to 90 days"
+                            user="Admin"
+                            time="2 hours ago"
+                        />
+                        <ActivityItem
+                            action="User invited"
+                            details="Alice Johnson added as Analyst"
+                            user="John Doe"
+                            time="3 hours ago"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-surface-a10 dark:bg-surface-a20 rounded-lg border border-surface-a30 p-6">
+                <h3 className="font-semibold text-text-primary mb-4">Quick Actions</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <QuickActionCard
+                        icon={<FileText className="w-6 h-6" />}
+                        title="Upload Documents"
+                        description="Add new documents to your knowledge base"
+                    />
+                    <QuickActionCard
+                        icon={<Brain className="w-6 h-6" />}
+                        title="Run Evaluation"
+                        description="Test model performance with new datasets"
+                    />
+                    <QuickActionCard
+                        icon={<Database className="w-6 h-6" />}
+                        title="Reindex Vectors"
+                        description="Rebuild FAISS index for optimal search"
+                    />
+                    <QuickActionCard
+                        icon={<AlertTriangle className="w-6 h-6" />}
+                        title="Create Policy"
+                        description="Define new risk management rules"
+                    />
                 </div>
             </div>
         </div>
+    );
+}
+
+function HealthItem({ label, status, value }: { label: string; status: 'healthy' | 'warning' | 'error'; value: string }) {
+    const statusColors = {
+        healthy: 'bg-success-a20',
+        warning: 'bg-warning-a20',
+        error: 'bg-danger-a20'
+    };
+
+    return (
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+                <div className={cn("w-2 h-2 rounded-full", statusColors[status])} />
+                <span className="text-sm text-text-secondary">{label}</span>
+            </div>
+            <span className="text-sm text-text-muted">{value}</span>
+        </div>
+    );
+}
+
+function RiskCell({ level, count, label }: { level: 'low' | 'medium' | 'critical'; count: number; label: string }) {
+    const bgColors = {
+        low: 'bg-success-a20/10 border-success-a20/20 hover:bg-success-a20/20',
+        medium: 'bg-warning-a20/10 border-warning-a20/20 hover:bg-warning-a20/20',
+        critical: 'bg-danger-a20/10 border-danger-a20/20 hover:bg-danger-a20/20'
+    };
+
+    const textColors = {
+        low: 'text-success-a20',
+        medium: 'text-warning-a20',
+        critical: 'text-danger-a20'
+    };
+
+    return (
+        <div className={cn("p-4 rounded-lg border-2 cursor-pointer transition-all", bgColors[level])}>
+            <div className={cn("text-3xl font-bold mb-1", textColors[level])}>{count}</div>
+            <div className="text-xs text-text-secondary">{label}</div>
+        </div>
+    );
+}
+
+function ActivityItem({ action, details, user, time, alert = false }: {
+    action: string;
+    details: string;
+    user: string;
+    time: string;
+    alert?: boolean;
+}) {
+    return (
+        <div className={cn(
+            "flex items-start gap-3 p-3 rounded-md transition-colors",
+            alert ? 'bg-danger-a20/10' : 'hover:bg-surface-a20 dark:hover:bg-surface-a30'
+        )}>
+            <div className={cn(
+                "w-2 h-2 mt-2 rounded-full",
+                alert ? 'bg-danger-a20' : 'bg-primary-a30'
+            )} />
+            <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-text-primary">{action}</p>
+                <p className="text-sm text-text-secondary truncate">{details}</p>
+                <div className="flex items-center gap-2 mt-1 text-xs text-text-muted">
+                    <span>{user}</span>
+                    <span>•</span>
+                    <span>{time}</span>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function QuickActionCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+    return (
+        <button className="p-4 text-left rounded-lg border border-surface-a30 hover:border-primary-a30 hover:shadow-md transition-all group">
+            <div className="text-primary-a40 mb-2 group-hover:text-primary-a50 transition-colors">
+                {icon}
+            </div>
+            <h4 className="font-medium text-text-primary mb-1">{title}</h4>
+            <p className="text-sm text-text-muted">{description}</p>
+        </button>
     );
 }

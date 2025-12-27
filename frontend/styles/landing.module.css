@@ -1,0 +1,45 @@
+/* styles/landing.module.css */
+
+.perspective-container {
+    perspective: 1000px;
+}
+
+.preserve-3d {
+    transform-style: preserve-3d;
+}
+
+.backface-hidden {
+    backface-visibility: hidden;
+}
+
+/* Custom mask for funnel effect */
+.funnel-mask {
+    mask-image: linear-gradient(to bottom, black 0%, black 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 80%, transparent 100%);
+}
+
+/* Spotlight gradient for Explainability visual */
+.spotlight-gradient {
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+}
+
+[data-theme='light'] .spotlight-gradient {
+    background: radial-gradient(circle at center, rgba(0, 0, 0, 0.05) 0%, transparent 70%);
+}
+
+/* Pulse animation for Risk visual */
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+.pulse-ring {
+    animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
