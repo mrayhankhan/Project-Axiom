@@ -68,3 +68,12 @@ Vercel will automatically detect that this is a Next.js project.
 
 *   **Build Errors**: If the build fails, check the logs. Common issues include TypeScript errors or linting errors. We have fixed most of these, but strict checks on Vercel might catch others.
 *   **Hydration Errors**: We added `suppressHydrationWarning` to `app/layout.tsx`, so these should not block deployment, but check the console if the layout looks broken.
+
+## Common Issues
+
+### "Log in to Vercel" on other devices
+If you are asked to log in to view your site on another device, **Deployment Protection** is likely enabled. To fix this:
+1.  Go to your project in the Vercel Dashboard.
+2.  Click **Settings** -> **Deployment Protection**.
+3.  Disable **Vercel Authentication** (or "Standard Protection").
+4.  Click **Save**.
