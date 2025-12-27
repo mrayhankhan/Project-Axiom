@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { Button } from '../ui/button';
 
 export const AuthCard = () => {
@@ -10,9 +11,16 @@ export const AuthCard = () => {
 
     const handleGoogleSignIn = async () => {
         setIsLoading(true);
-        // Simulate auth delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        router.push('/dashboard');
+        await signIn('google', { callbackUrl: '/dashboard' });
+    };
+
+    const handleCredentialsSignIn = async () => {
+        setIsLoading(true);
+        await signIn('credentials', {
+            email: 'demo@example.com',
+            password: 'password',
+            callbackUrl: '/dashboard'
+        });
     };
 
     return (
@@ -74,12 +82,9 @@ export const AuthCard = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                    <Button variant="secondary" className="w-full">
-                        GitHub
-                    </Button>
-                    <Button variant="secondary" className="w-full">
-                        SSO
+                <div className="grid grid-cols-1 gap-3">
+                    <Button variant="secondary" className="w-full" onClick={handleCredentialsSignIn}>
+                        Sign in with Demo Account
                     </Button>
                 </div>
             </div>

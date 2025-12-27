@@ -3,12 +3,17 @@ import { db } from '@/lib/db';
 import { uploadFile, BUCKET_NAME } from '@/lib/storage';
 import { supabase } from '@/lib/storage';
 import { ingestDocument } from '@/lib/ingest';
+import { auth } from '@/auth';
 
 export async function POST(req: NextRequest) {
     try {
         const formData = await req.formData();
         const file = formData.get('file') as File;
-        const userId = "demo-user-id"; // TODO: Get from session once Auth is back
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const userId = session.user.id;
 
         if (!file) {
             return NextResponse.json({ error: 'No file provided' }, { status: 400 });
