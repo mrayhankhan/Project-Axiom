@@ -5,14 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Send, ThumbsUp, ThumbsDown, Copy, RotateCcw, Sparkles, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface Message {
-    id: string;
-    role: 'user' | 'assistant';
-    content: string;
-    sources?: Source[];
-    timestamp: string;
-}
+import { useChat } from '@ai-sdk/react';
 
 interface Source {
     id: string;
@@ -22,68 +15,11 @@ interface Source {
     similarity: number;
 }
 
-const mockMessages: Message[] = [
-    {
-        id: '1',
-        role: 'user',
-        content: 'What are the key risk factors for the credit scoring model mentioned in the documentation?',
-        timestamp: '10:23 AM'
-    },
-    {
-        id: '2',
-        role: 'assistant',
-        content: 'Based on the credit risk model documentation, the key risk factors include:\n\n1. **Data Quality Risk**: The model relies on historical credit data that may contain biases or outdated information. Regular validation is required to ensure data accuracy.\n\n2. **Model Drift**: Changes in economic conditions can cause the model\'s predictions to become less accurate over time. Monthly monitoring is recommended.\n\n3. **Regulatory Compliance**: The model must adhere to fair lending practices and explainability requirements under current regulations.\n\n4. **Feature Importance Stability**: Critical features like debt-to-income ratio and payment history should maintain consistent importance weights.\n\nThe documentation recommends quarterly reviews and immediate investigation if accuracy drops below 92%.',
-        sources: [
-            {
-                id: '1',
-                document: 'Credit Risk Model Documentation v2.3.pdf',
-                page: 12,
-                snippet: 'Key risk factors include data quality, model drift, and regulatory compliance requirements...',
-                similarity: 0.94
-            },
-            {
-                id: '2',
-                document: 'Model Risk Assessment Report Q4.pdf',
-                page: 8,
-                snippet: 'The credit scoring model shows sensitivity to changes in debt-to-income ratios...',
-                similarity: 0.89
-            }
-        ],
-        timestamp: '10:23 AM'
-    }
-];
-
 export default function QA() {
-    const [messages, setMessages] = useState<Message[]>(mockMessages);
-    const [input, setInput] = useState('');
-    const [selectedModel, setSelectedModel] = useState('GPT-4');
+    const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat() as any;
+    const [selectedModel, setSelectedModel] = useState('Gemini 1.5 Flash');
     const [showSources, setShowSources] = useState(true);
     const [temperature, setTemperature] = useState(0.7);
-
-    const handleSend = () => {
-        if (!input.trim()) return;
-
-        const newMessage: Message = {
-            id: Date.now().toString(),
-            role: 'user',
-            content: input,
-            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-        };
-
-        setMessages([...messages, newMessage]);
-        setInput('');
-
-        // Simulate assistant response
-        setTimeout(() => {
-            const assistantMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                role: 'assistant',
-                content: 'I\'m analyzing your question and retrieving relevant information from the knowledge base...',
-                timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            };
-            setMessages(prev => [...prev, assistantMessage]);
-        }, 500);
-    };
 
     return (
         <div className="h-[calc(100vh-8rem)] flex gap-6">
@@ -101,17 +37,22 @@ export default function QA() {
                             onChange={(e) => setSelectedModel(e.target.value)}
                             className="px-3 py-1.5 text-sm border border-surface-a40 rounded-md focus:border-primary-a30 focus:ring-2 focus:ring-primary-a30/25 bg-surface-a10 dark:bg-surface-a20 text-text-primary"
                         >
-                            <option>GPT-4</option>
-                            <option>GPT-3.5 Turbo</option>
-                            <option>Claude 2</option>
+                            <option>Gemini 1.5 Flash</option>
                         </select>
-                        <Button variant="secondary" size="sm">New Chat</Button>
+                        <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>New Chat</Button>
                     </div>
                 </div>
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                    {messages.map((message) => (
+                    {(!messages || messages.length === 0) && (
+                        <div className="flex flex-col items-center justify-center h-full text-center text-text-muted">
+                            <Sparkles className="w-12 h-12 mb-4 text-primary-a30" />
+                            <h4 className="text-lg font-medium text-text-primary">Start a conversation</h4>
+                            <p className="max-w-md mt-2">Ask questions about your uploaded documents. The AI will search through them to provide answers.</p>
+                        </div>
+                    )}
+                    {messages?.map((message: any) => (
                         <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                             {message.role === 'assistant' && (
                                 <div className="flex-shrink-0 w-8 h-8 bg-primary-a30 rounded-full flex items-center justify-center mr-3">
@@ -128,7 +69,7 @@ export default function QA() {
                                     <p className="whitespace-pre-wrap">{message.content}</p>
                                 </div>
                                 <div className="flex items-center gap-2 mt-2 px-1">
-                                    <span className="text-xs text-text-muted">{message.timestamp}</span>
+                                    <span className="text-xs text-text-muted">Just now</span>
                                     {message.role === 'assistant' && (
                                         <>
                                             <button className="p-1 hover:bg-surface-a20 rounded" title="Copy">
@@ -146,35 +87,37 @@ export default function QA() {
                                         </>
                                     )}
                                 </div>
-                                {message.sources && message.sources.length > 0 && (
-                                    <div className="mt-3 space-y-2">
-                                        <p className="text-xs font-medium text-text-secondary">Sources ({message.sources.length})</p>
-                                        {message.sources.map((source) => (
-                                            <SourceCard key={source.id} source={source} />
-                                        ))}
-                                    </div>
-                                )}
                             </div>
                             {message.role === 'user' && (
                                 <div className="flex-shrink-0 w-8 h-8 bg-surface-a40 rounded-full flex items-center justify-center ml-3 text-white text-sm font-medium">
-                                    JD
+                                    You
                                 </div>
                             )}
                         </div>
                     ))}
+                    {isLoading && (
+                        <div className="flex justify-start">
+                            <div className="flex-shrink-0 w-8 h-8 bg-primary-a30 rounded-full flex items-center justify-center mr-3">
+                                <Sparkles className="w-4 h-4 text-white" />
+                            </div>
+                            <div className="bg-surface-a20 dark:bg-surface-a30 rounded-lg px-4 py-3 text-text-primary">
+                                <span className="animate-pulse">Thinking...</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Input Area */}
                 <div className="border-t border-surface-a30 p-4">
-                    <div className="flex items-end gap-2">
+                    <form onSubmit={handleSubmit} className="flex items-end gap-2">
                         <div className="flex-1">
                             <textarea
                                 value={input}
-                                onChange={(e) => setInput(e.target.value)}
+                                onChange={handleInputChange}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && !e.shiftKey) {
                                         e.preventDefault();
-                                        handleSend();
+                                        handleSubmit(e as any);
                                     }
                                 }}
                                 placeholder="Ask a question about your documents..."
@@ -183,19 +126,19 @@ export default function QA() {
                             />
                             <div className="flex items-center justify-between mt-2">
                                 <p className="text-xs text-text-muted">Press Enter to send, Shift+Enter for new line</p>
-                                <p className="text-xs text-text-muted">{input.length} characters</p>
+                                <p className="text-xs text-text-muted">{input?.length || 0} characters</p>
                             </div>
                         </div>
                         <Button
+                            type="submit"
                             variant="primary"
                             size="lg"
                             icon={<Send className="w-4 h-4" />}
-                            onClick={handleSend}
-                            disabled={!input.trim()}
+                            disabled={!input?.trim() || isLoading}
                         >
                             Send
                         </Button>
-                    </div>
+                    </form>
                 </div>
             </div>
 

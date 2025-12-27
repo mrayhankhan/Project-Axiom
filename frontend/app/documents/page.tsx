@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Table, Column } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Badge, RiskBadge } from '@/components/ui/badge';
 import { Search, Filter, Download, Upload, Trash2, MoreVertical, Eye, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import axios from 'axios';
 
 interface Document {
     id: string;
@@ -18,99 +19,17 @@ interface Document {
     uploadedBy: string;
     uploadDate: string;
     size: string;
-    status: 'indexed' | 'queued' | 'error';
+    status: 'indexed' | 'queued' | 'error' | 'pending';
     chunks: number;
     lastUsed: string;
     tags: string[];
     riskLevel?: 'low' | 'medium' | 'high' | 'critical';
+    url?: string;
 }
 
-const mockDocuments: Document[] = [
-    {
-        id: '1',
-        name: 'Credit Risk Model Documentation v2.3.pdf',
-        source: 'S3',
-        type: 'PDF',
-        uploadedBy: 'Sarah Chen',
-        uploadDate: '2024-01-15',
-        size: '2.4 MB',
-        status: 'indexed',
-        chunks: 142,
-        lastUsed: '2 hours ago',
-        tags: ['risk', 'model', 'credit'],
-        riskLevel: 'low'
-    },
-    {
-        id: '2',
-        name: 'Underwriting Guidelines 2024.docx',
-        source: 'SharePoint',
-        type: 'DOCX',
-        uploadedBy: 'John Doe',
-        uploadDate: '2024-01-14',
-        size: '1.8 MB',
-        status: 'indexed',
-        chunks: 98,
-        lastUsed: '1 day ago',
-        tags: ['underwriting', 'policy'],
-        riskLevel: 'medium'
-    },
-    {
-        id: '3',
-        name: 'ML Model Explainability Framework.pdf',
-        source: 'Local',
-        type: 'PDF',
-        uploadedBy: 'Alice Johnson',
-        uploadDate: '2024-01-13',
-        size: '3.2 MB',
-        status: 'indexed',
-        chunks: 187,
-        lastUsed: '3 hours ago',
-        tags: ['explainability', 'framework', 'ml'],
-        riskLevel: 'low'
-    },
-    {
-        id: '4',
-        name: 'Regulatory Compliance Checklist.xlsx',
-        source: 'Google Drive',
-        type: 'XLSX',
-        uploadedBy: 'System',
-        uploadDate: '2024-01-12',
-        size: '512 KB',
-        status: 'queued',
-        chunks: 0,
-        lastUsed: 'Never',
-        tags: ['compliance', 'regulatory'],
-    },
-    {
-        id: '5',
-        name: 'Model Risk Assessment Report Q4.pdf',
-        source: 'S3',
-        type: 'PDF',
-        uploadedBy: 'Sarah Chen',
-        uploadDate: '2024-01-11',
-        size: '4.1 MB',
-        status: 'indexed',
-        chunks: 213,
-        lastUsed: '5 days ago',
-        tags: ['risk', 'assessment', 'q4'],
-        riskLevel: 'high'
-    },
-    {
-        id: '6',
-        name: 'Training Data Dictionary.csv',
-        source: 'Local',
-        type: 'CSV',
-        uploadedBy: 'John Doe',
-        uploadDate: '2024-01-10',
-        size: '256 KB',
-        status: 'error',
-        chunks: 0,
-        lastUsed: 'Never',
-        tags: ['data', 'training'],
-    }
-];
-
 export default function Documents() {
+    const [documents, setDocuments] = useState<Document[]>([]);
+    const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
     const [searchQuery, setSearchQuery] = useState('');
     const [filterSource, setFilterSource] = useState('');
@@ -118,6 +37,47 @@ export default function Documents() {
     const [sortColumn, setSortColumn] = useState<string | null>(null);
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const fetchDocuments = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get('/api/documents');
+            const mappedDocs: Document[] = response.data.map((doc: any) => ({
+                id: doc.id,
+                name: doc.name,
+                source: 'Supabase', // Default for now
+                type: doc.type,
+                uploadedBy: 'Demo User', // TODO: Get real user name
+                uploadDate: new Date(doc.createdAt).toLocaleDateString(),
+                size: formatBytes(doc.size),
+                status: doc.status,
+                chunks: doc._count?.chunks || 0,
+                lastUsed: new Date(doc.updatedAt).toLocaleDateString(), // Placeholder
+                tags: [], // TODO: Add tags to DB
+                riskLevel: doc.riskLevel,
+                url: doc.url
+            }));
+            setDocuments(mappedDocs);
+        } catch (error) {
+            console.error("Failed to fetch documents", error);
+            toast.error("Failed to load documents");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchDocuments();
+    }, []);
+
+    const formatBytes = (bytes: number, decimals = 2) => {
+        if (!+bytes) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+    };
 
     const columns: Column<Document>[] = [
         {
@@ -130,7 +90,7 @@ export default function Documents() {
                         <FileText className="w-5 h-5 text-primary-a40" />
                     </div>
                     <div className="min-w-0">
-                        <p className="font-medium text-text-primary truncate">{doc.name}</p>
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="font-medium text-text-primary truncate hover:underline">{doc.name}</a>
                         <div className="flex items-center gap-2 mt-0.5">
                             {doc.tags.slice(0, 2).map((tag) => (
                                 <Badge key={tag} variant="neutral" size="sm">{tag}</Badge>
@@ -168,12 +128,14 @@ export default function Documents() {
             header: 'Status',
             width: '120px',
             render: (doc) => {
-                const variants = {
-                    indexed: 'success' as const,
-                    queued: 'warning' as const,
-                    error: 'danger' as const
+                const variants: Record<string, "success" | "warning" | "danger" | "neutral"> = {
+                    indexed: 'success',
+                    queued: 'warning',
+                    pending: 'warning',
+                    processing: 'warning',
+                    error: 'danger'
                 };
-                return <Badge variant={variants[doc.status]} size="sm" dot>{doc.status}</Badge>;
+                return <Badge variant={variants[doc.status] || 'neutral'} size="sm" dot>{doc.status}</Badge>;
             }
         },
         {
@@ -193,10 +155,10 @@ export default function Documents() {
             width: '100px',
             render: (doc) => (
                 <div className="flex items-center gap-1">
-                    <button className="p-1.5 hover:bg-surface-a20 rounded transition-colors" title="View">
+                    <button className="p-1.5 hover:bg-surface-a20 rounded transition-colors" title="View" onClick={() => window.open(doc.url, '_blank')}>
                         <Eye className="w-4 h-4 text-text-secondary" />
                     </button>
-                    <button className="p-1.5 hover:bg-surface-a20 rounded transition-colors" title="Download">
+                    <button className="p-1.5 hover:bg-surface-a20 rounded transition-colors" title="Download" onClick={() => window.open(doc.url, '_blank')}>
                         <Download className="w-4 h-4 text-text-secondary" />
                     </button>
                     <button className="p-1.5 hover:bg-surface-a20 rounded transition-colors" title="More">
@@ -208,7 +170,7 @@ export default function Documents() {
     ];
 
     const filteredDocuments = React.useMemo(() => {
-        let result = mockDocuments.filter(doc => {
+        let result = documents.filter(doc => {
             const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
             const matchesSource = !filterSource || doc.source === filterSource;
             const matchesStatus = !filterStatus || doc.status === filterStatus;
@@ -227,7 +189,7 @@ export default function Documents() {
         }
 
         return result;
-    }, [searchQuery, filterSource, filterStatus, sortColumn, sortDirection]);
+    }, [documents, searchQuery, filterSource, filterStatus, sortColumn, sortDirection]);
 
     const handleSort = (column: string, direction: 'asc' | 'desc') => {
         setSortColumn(column);
@@ -265,12 +227,27 @@ export default function Documents() {
         fileInputRef.current?.click();
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
-            toast.info(`Uploading ${file.name}...`, {
-                description: "This is a demo. File will not be actually uploaded."
-            });
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const toastId = toast.loading(`Uploading ${file.name}...`);
+
+            try {
+                await axios.post('/api/documents/upload', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+                toast.success(`${file.name} uploaded successfully`, { id: toastId });
+                fetchDocuments(); // Refresh list
+            } catch (error) {
+                console.error("Upload failed", error);
+                toast.error("Upload failed", { id: toastId });
+            }
+
             // Reset input
             e.target.value = '';
         }
@@ -325,7 +302,8 @@ export default function Documents() {
                         { value: 'S3', label: 'S3' },
                         { value: 'SharePoint', label: 'SharePoint' },
                         { value: 'Google Drive', label: 'Google Drive' },
-                        { value: 'Local', label: 'Local' }
+                        { value: 'Local', label: 'Local' },
+                        { value: 'Supabase', label: 'Supabase' }
                     ]}
                     value={filterSource}
                     onChange={(e) => setFilterSource(e.target.value)}
@@ -336,6 +314,7 @@ export default function Documents() {
                     options={[
                         { value: 'indexed', label: 'Indexed' },
                         { value: 'queued', label: 'Queued' },
+                        { value: 'pending', label: 'Pending' },
                         { value: 'error', label: 'Error' }
                     ]}
                     value={filterStatus}
@@ -387,7 +366,7 @@ export default function Documents() {
 
             {/* Results Count */}
             <div className="text-sm text-text-muted">
-                Showing {filteredDocuments.length} of {mockDocuments.length} documents
+                Showing {filteredDocuments.length} documents
             </div>
 
             {/* Table View */}
@@ -396,7 +375,7 @@ export default function Documents() {
                     columns={columns}
                     data={filteredDocuments}
                     selectable
-                    emptyMessage="No documents found"
+                    emptyMessage={loading ? "Loading documents..." : "No documents found"}
                     sortColumn={sortColumn}
                     sortDirection={sortDirection}
                     onSort={handleSort}
@@ -416,14 +395,16 @@ export default function Documents() {
 }
 
 function DocumentCard({ document }: { document: Document }) {
-    const statusColors = {
-        indexed: 'success' as const,
-        queued: 'warning' as const,
-        error: 'danger' as const
+    const statusColors: Record<string, "success" | "warning" | "danger" | "neutral"> = {
+        indexed: 'success',
+        queued: 'warning',
+        pending: 'warning',
+        processing: 'warning',
+        error: 'danger'
     };
 
     return (
-        <div className="bg-surface-a10 dark:bg-surface-a20 rounded-lg border border-surface-a30 p-4 hover:shadow-md transition-all cursor-pointer">
+        <div className="bg-surface-a10 dark:bg-surface-a20 rounded-lg border border-surface-a30 p-4 hover:shadow-md transition-all cursor-pointer" onClick={() => document.url && window.open(document.url, '_blank')}>
             <div className="flex items-start justify-between mb-3">
                 <div className="flex-shrink-0 w-12 h-12 bg-primary-a30/10 rounded-lg flex items-center justify-center">
                     <FileText className="w-6 h-6 text-primary-a40" />
@@ -450,7 +431,7 @@ function DocumentCard({ document }: { document: Document }) {
                 </div>
             </div>
             <div className="flex items-center gap-2 mb-3">
-                <Badge variant={statusColors[document.status]} size="sm" dot>
+                <Badge variant={statusColors[document.status] || 'neutral'} size="sm" dot>
                     {document.status}
                 </Badge>
                 {document.riskLevel && <RiskBadge level={document.riskLevel} />}
