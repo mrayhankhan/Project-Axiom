@@ -8,48 +8,70 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 export default function Dashboard() {
+    const [data, setData] = React.useState<any>(null);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const res = await fetch('/api/dashboard');
+                const json = await res.json();
+                setData(json);
+            } catch (error) {
+                console.error("Failed to fetch dashboard data", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    if (loading) {
+        return <div className="p-6 text-center">Loading dashboard...</div>;
+    }
+
     return (
         <div className="space-y-6">
             {/* Summary Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                 <MetricCard
                     label="Total Documents"
-                    value="2,847"
+                    value={data?.totalDocuments?.toString() || "0"}
                     change="+12% this month"
                     trend="up"
                     icon={<FileText className="w-5 h-5" />}
                 />
                 <MetricCard
                     label="Indexed Vectors"
-                    value="1.2M"
+                    value={data?.totalChunks?.toString() || "0"}
                     change="+8% this week"
                     trend="up"
                     icon={<Database className="w-5 h-5" />}
                 />
                 <MetricCard
                     label="Active Models"
-                    value="14"
+                    value={data?.activeModels?.toString() || "0"}
                     change="2 pending review"
                     trend="neutral"
                     icon={<Brain className="w-5 h-5" />}
                 />
                 <MetricCard
                     label="Avg. Latency"
-                    value="124ms"
+                    value={data?.avgLatency || "0ms"}
                     change="-5% improvement"
                     trend="down"
                     icon={<Clock className="w-5 h-5" />}
                 />
                 <MetricCard
                     label="Risk Alerts"
-                    value="3"
+                    value={data?.riskAlerts?.toString() || "0"}
                     change="2 critical"
                     trend="up"
                     icon={<AlertTriangle className="w-5 h-5" />}
                 />
                 <MetricCard
                     label="Monthly Tokens"
-                    value="2.4M"
+                    value={data?.monthlyTokens || "0"}
                     change="+18% vs last month"
                     trend="up"
                     icon={<TrendingUp className="w-5 h-5" />}
@@ -130,37 +152,19 @@ export default function Dashboard() {
                         <Button variant="tertiary" size="sm">View All</Button>
                     </div>
                     <div className="space-y-3">
-                        <ActivityItem
-                            action="Evaluation completed"
-                            details="Model 'Claims v2' - Accuracy: 94.2%"
-                            user="Sarah Chen"
-                            time="5 min ago"
-                        />
-                        <ActivityItem
-                            action="Documents indexed"
-                            details="15 PDFs added to knowledge base"
-                            user="System"
-                            time="12 min ago"
-                        />
-                        <ActivityItem
-                            action="Risk alert created"
-                            details="Model drift detected on 'Underwriting AI'"
-                            user="John Doe"
-                            time="1 hour ago"
-                            alert
-                        />
-                        <ActivityItem
-                            action="Policy updated"
-                            details="Model retention policy changed to 90 days"
-                            user="Admin"
-                            time="2 hours ago"
-                        />
-                        <ActivityItem
-                            action="User invited"
-                            details="Alice Johnson added as Analyst"
-                            user="John Doe"
-                            time="3 hours ago"
-                        />
+                        {data?.recentActivity?.map((activity: any, i: number) => (
+                            <ActivityItem
+                                key={i}
+                                action={activity.action}
+                                details={activity.details}
+                                user={activity.user}
+                                time={activity.time}
+                                alert={activity.alert}
+                            />
+                        ))}
+                        {(!data?.recentActivity || data.recentActivity.length === 0) && (
+                            <div className="text-sm text-text-muted">No recent activity</div>
+                        )}
                     </div>
                 </div>
             </div>
