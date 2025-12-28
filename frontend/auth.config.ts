@@ -1,6 +1,8 @@
 import type { NextAuthConfig } from 'next-auth';
 import Google from 'next-auth/providers/google';
 import Credentials from 'next-auth/providers/credentials';
+import bcrypt from 'bcryptjs';
+import { db } from '@/lib/db';
 
 export const authConfig = {
     pages: {
@@ -59,15 +61,33 @@ export const authConfig = {
         }),
         Credentials({
             async authorize(credentials) {
-                // Mock credentials for testing
-                if (credentials?.email === 'demo@example.com' && credentials?.password === 'password') {
-                    return {
-                        id: 'demo-user-id',
-                        name: 'Demo User',
-                        email: 'demo@example.com',
-                        image: 'https://github.com/shadcn.png',
-                    };
+                const email = credentials?.email as string;
+                const password = credentials?.password as string;
+
+                if (!email || !password) return null;
+
+                try {
+                    const user = await db.user.findUnique({
+                        where: { email }
+                    });
+
+                    if (!user || !user.password) return null;
+
+                    const passwordsMatch = await bcrypt.compare(password, user.password);
+
+                    if (passwordsMatch) {
+                        return {
+                            id: user.id,
+                            name: user.name,
+                            email: user.email,
+                            image: user.image,
+                            role: user.role
+                        };
+                    }
+                } catch (error) {
+                    console.error("Auth error:", error);
                 }
+
                 return null;
             },
         }),
