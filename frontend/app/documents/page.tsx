@@ -10,6 +10,7 @@ import { Search, Filter, Download, Upload, Trash2, MoreVertical, Eye, FileText }
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { useSession } from 'next-auth/react';
 
 interface Document {
     id: string;
@@ -28,6 +29,7 @@ interface Document {
 }
 
 export default function Documents() {
+    const { data: session } = useSession();
     const [documents, setDocuments] = useState<Document[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
@@ -47,7 +49,7 @@ export default function Documents() {
                 name: doc.name,
                 source: 'Supabase', // Default for now
                 type: doc.type,
-                uploadedBy: 'Demo User', // TODO: Get real user name
+                uploadedBy: session?.user?.name || 'Demo User',
                 uploadDate: new Date(doc.createdAt).toLocaleDateString(),
                 size: formatBytes(doc.size),
                 status: doc.status,
@@ -68,7 +70,7 @@ export default function Documents() {
 
     useEffect(() => {
         fetchDocuments();
-    }, []);
+    }, [session]);
 
     const formatBytes = (bytes: number, decimals = 2) => {
         if (!+bytes) return '0 Bytes';

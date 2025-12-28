@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Sidebar, MobileSidebar } from "@/components/ui/sidebar";
 import { TopBar } from "@/components/ui/TopBar";
+import { SessionProvider } from "next-auth/react";
 
 export default function ClientLayout({
     children,
@@ -84,42 +85,46 @@ export default function ClientLayout({
 
     if (isPublicPage) {
         return (
-            <div className="min-h-screen bg-surface-a10 dark:bg-surface-a20 text-text-primary">
-                {children}
-            </div>
+            <SessionProvider>
+                <div className="min-h-screen bg-surface-a10 dark:bg-surface-a20 text-text-primary">
+                    {children}
+                </div>
+            </SessionProvider>
         );
     }
 
     return (
-        <div className="flex h-screen overflow-hidden bg-surface-a10 dark:bg-surface-a20">
-            {/* Desktop Sidebar */}
-            <div className="hidden lg:block">
-                <Sidebar
+        <SessionProvider>
+            <div className="flex h-screen overflow-hidden bg-surface-a10 dark:bg-surface-a20">
+                {/* Desktop Sidebar */}
+                <div className="hidden lg:block">
+                    <Sidebar
+                        activeItem={activeItem}
+                        onNavigate={handleNavigate}
+                        collapsed={sidebarCollapsed}
+                        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    />
+                </div>
+
+                {/* Mobile Sidebar */}
+                <MobileSidebar
                     activeItem={activeItem}
                     onNavigate={handleNavigate}
-                    collapsed={sidebarCollapsed}
-                    onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    isOpen={mobileSidebarOpen}
+                    onClose={() => setMobileSidebarOpen(false)}
                 />
-            </div>
 
-            {/* Mobile Sidebar */}
-            <MobileSidebar
-                activeItem={activeItem}
-                onNavigate={handleNavigate}
-                isOpen={mobileSidebarOpen}
-                onClose={() => setMobileSidebarOpen(false)}
-            />
-
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <TopBar
-                    title={getPageTitle()}
-                    onMenuClick={() => setMobileSidebarOpen(true)}
-                    breadcrumbs={["Home", getPageTitle()]}
-                />
-                <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-                    {children}
-                </main>
+                <div className="flex-1 flex flex-col overflow-hidden">
+                    <TopBar
+                        title={getPageTitle()}
+                        onMenuClick={() => setMobileSidebarOpen(true)}
+                        breadcrumbs={["Home", getPageTitle()]}
+                    />
+                    <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+                        {children}
+                    </main>
+                </div>
             </div>
-        </div>
+        </SessionProvider>
     );
 }

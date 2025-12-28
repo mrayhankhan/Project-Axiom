@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { auth } from '@/auth';
 
 export async function GET(req: NextRequest) {
     try {
-        // TODO: Get userId from session
-        const userId = "demo-user-id";
+        const session = await auth();
+        const userId = session?.user?.id || "demo-user-id";
 
         const documents = await db.document.findMany({
             where: {
