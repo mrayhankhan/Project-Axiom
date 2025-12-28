@@ -1,71 +1,39 @@
-# Setting Up Credentials for Project Axiom
+# Setup Credentials
 
-Follow these steps to generate the necessary API keys and set up your `.env` file.
+## 1. Database (Supabase)
+*Already configured.*
 
-## 1. Create the `.env` File
-1.  Navigate to the `frontend` folder.
-2.  Create a new file named `.env`.
-3.  Copy the contents of `.env.example` into `.env`.
+## 2. Google OAuth Setup (Final Steps)
 
----
+**Why not SHA1?**
+SHA1 keys are used for **Android/iOS apps** to verify the app's signature.
+For a **Web App** (like this one), we use **OAuth 2.0**, which requires a **Client ID** and a **Client Secret**. This is the standard web security protocol.
 
-## 2. Supabase (Database & Storage)
-*We use Supabase for the PostgreSQL database and file storage.*
+### You have the Client ID!
+You found it: `867168183480-t5kad0s03cfd4va7f1brjtdheln583it.apps.googleusercontent.com`
 
-1.  Go to [supabase.com](https://supabase.com/) and sign up/log in.
-2.  Click **"New Project"**.
-3.  Give it a name (e.g., "Axiom") and a strong password. **Save this password!**
-4.  Select a region close to you.
-5.  Click **"Create new project"**.
-6.  Once the project is ready:
-    *   Go to **Project Settings** (gear icon) -> **API**.
-    *   Copy the **Project URL** -> Paste into `.env` as `NEXT_PUBLIC_SUPABASE_URL`.
-    *   Copy the **anon public** key -> Paste into `.env` as `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-    *   Go to **Project Settings** -> **Database**.
-    *   Under **Connection string**, make sure "Transaction Pooler" is checked (port 6543) -> Copy the URI.
-    *   Paste into `.env` as `DATABASE_URL`. **Replace `[YOUR-PASSWORD]` with the password you created in step 3.**
-    *   Uncheck "Use connection pooling" (port 5432) -> Copy the URI.
-    *   Paste into `.env` as `DIRECT_URL`. **Replace `[YOUR-PASSWORD]` again.**
+### How to find the Client Secret:
+The "Secret" is like a password. It is often hidden in the Firebase Console. To see it, you must go to the underlying Google Cloud Console.
 
----
+1.  **Click this direct link**:
+    [https://console.cloud.google.com/apis/credentials?project=axiom-78753](https://console.cloud.google.com/apis/credentials?project=axiom-78753)
 
-## 3. Google OAuth (Sign In)
-*Allows users to sign in with their Google accounts.*
+2.  **Find the matching Credential**:
+    *   Look at the list under **"OAuth 2.0 Client IDs"**.
+    *   Find the one that matches your ID (`...ln583it.apps.googleusercontent.com`).
+    *   Click the **Pencil Icon (Edit)** next to it.
 
-1.  Go to the [Google Cloud Console](https://console.cloud.google.com/).
-2.  Create a **New Project** (e.g., "Axiom Auth").
-3.  Search for **"OAuth consent screen"** in the top bar.
-    *   Select **External**.
-    *   Fill in App Name ("Axiom"), User Support Email, and Developer Contact Email.
-    *   Click **Save and Continue** (you can skip Scopes and Test Users for now).
-4.  Go to **Credentials** (left sidebar).
-5.  Click **Create Credentials** -> **OAuth client ID**.
-6.  Application type: **Web application**.
-7.  Name: "Axiom Web".
-8.  **Authorized JavaScript origins**:
-    *   `http://localhost:3000`
-    *   *(Add your Vercel domain later, e.g., `https://project-axiom.vercel.app`)*
-9.  **Authorized redirect URIs**:
-    *   `http://localhost:3000/api/auth/callback/google`
-    *   *(Add Vercel domain later: `https://project-axiom.vercel.app/api/auth/callback/google`)*
-10. Click **Create**.
-11. Copy **Client ID** -> Paste into `.env` as `GOOGLE_CLIENT_ID`.
-12. Copy **Client Secret** -> Paste into `.env` as `GOOGLE_CLIENT_SECRET`.
+3.  **Reveal the Secret**:
+    *   On the right side, you will see **"Client secret"**.
+    *   It might be hidden. Click the **Eye Icon** or **Copy Icon** to get it.
 
----
+4.  **Update `.env`**:
+    *   I have already added the Client ID for you.
+    *   Just paste the secret into `AUTH_GOOGLE_SECRET`.
 
-## 4. Gemini API (Intelligence)
-*Powers the AI chat and embeddings.*
+5.  **Don't forget the Redirect URI!**:
+    *   While you are on that page, scroll down to **"Authorized redirect URIs"**.
+    *   Make sure `http://localhost:3000/api/auth/callback/google` is listed there.
 
-1.  Go to [Google AI Studio](https://aistudio.google.com/).
-2.  Click **"Get API key"** (top left).
-3.  Click **"Create API key"**.
-4.  Select your Google Cloud project (or create a new one).
-5.  Copy the key -> Paste into `.env` as `GEMINI_API_KEY`.
-
----
-
-## 5. NextAuth Secret
-1.  Open your terminal.
-2.  Run: `openssl rand -base64 32`
-3.  Copy the output -> Paste into `.env` as `NEXTAUTH_SECRET`.
+## 3. NextAuth Secret
+*Already configured.*

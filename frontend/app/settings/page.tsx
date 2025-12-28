@@ -9,7 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { Key, Webhook, Database, Copy, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+import { useSession } from 'next-auth/react';
+
 export default function Settings() {
+    const { data: session } = useSession();
     const [activeTab, setActiveTab] = useState<'workspace' | 'api' | 'integrations' | 'audit'>('workspace');
 
     return (
@@ -249,7 +252,7 @@ export default function Settings() {
                             />
                             <AuditLogItem
                                 action="Evaluation started"
-                                user="John Doe"
+                                user={session?.user?.name || "User"}
                                 details="Evaluation #342 for Claims Processor v2"
                                 timestamp="2024-01-15 09:15:22"
                             />
@@ -261,7 +264,7 @@ export default function Settings() {
                             />
                             <AuditLogItem
                                 action="User invited"
-                                user="John Doe"
+                                user={session?.user?.name || "User"}
                                 details="alice.johnson@company.com as Analyst"
                                 timestamp="2024-01-14 11:08:33"
                             />

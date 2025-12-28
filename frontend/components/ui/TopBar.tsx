@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSession, signOut } from 'next-auth/react';
 import { Search, Bell, Upload, Plus, Menu, ChevronDown, Sun, Moon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -23,14 +24,17 @@ export function TopBar({ title, breadcrumbs, onMenuClick, onSearch, environmentT
     const router = useRouter();
     const { theme, setTheme } = useTheme();
 
+    const { data: session } = useSession();
+    const user = session?.user;
+
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         onSearch?.(searchQuery);
     };
 
     const handleSignOut = () => {
+        signOut({ callbackUrl: '/' });
         toast.success('Signed out successfully');
-        router.push('/');
     };
 
     const handleMenuAction = (action: string) => {
@@ -179,8 +183,12 @@ export function TopBar({ title, breadcrumbs, onMenuClick, onSearch, environmentT
                             className="flex items-center gap-2 p-1 hover:bg-surface-a20 rounded-md transition-colors"
                             aria-label="Account menu"
                         >
-                            <div className="w-8 h-8 bg-primary-a30 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                                JD
+                            <div className="w-8 h-8 bg-primary-a30 rounded-full flex items-center justify-center text-white text-sm font-medium overflow-hidden">
+                                {user?.image ? (
+                                    <img src={user.image} alt={user.name || 'User'} className="w-full h-full object-cover" />
+                                ) : (
+                                    <span>{(user?.name || 'U').charAt(0).toUpperCase()}</span>
+                                )}
                             </div>
                             <ChevronDown className="w-4 h-4 text-text-secondary hidden lg:block" />
                         </button>
@@ -188,8 +196,8 @@ export function TopBar({ title, breadcrumbs, onMenuClick, onSearch, environmentT
                         {showAccountMenu && (
                             <div className="absolute right-0 mt-2 w-56 bg-surface-a10 dark:bg-surface-a20 rounded-lg shadow-lg border border-surface-a30 z-50">
                                 <div className="p-3 border-b border-surface-a30">
-                                    <p className="font-medium text-text-primary">John Doe</p>
-                                    <p className="text-sm text-text-muted">john.doe@company.com</p>
+                                    <p className="font-medium text-text-primary">{user?.name || 'Guest User'}</p>
+                                    <p className="text-sm text-text-muted">{user?.email || 'No email'}</p>
                                 </div>
                                 <div className="py-2">
                                     <MenuItem label="Profile Settings" onClick={() => handleMenuAction('Profile Settings')} />

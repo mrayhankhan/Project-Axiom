@@ -1,13 +1,16 @@
 "use client";
 
 import React from 'react';
-import { MetricCard } from '@/components/ui/card';
+import { Card, MetricCard } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Download, TrendingUp, Activity, Clock, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+import { useSession } from 'next-auth/react';
+
 export default function Analytics() {
+    const { data: session } = useSession();
     return (
         <div className="space-y-6">
             {/* Key Metrics */}
@@ -175,15 +178,15 @@ export default function Analytics() {
             </div>
 
             {/* User Activity */}
-            <div className="bg-surface-a10 dark:bg-surface-a20 rounded-lg border border-surface-a30 p-6">
-                <h3 className="font-semibold text-text-primary mb-4">User Activity</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <UserActivityCard name="Sarah Chen" queries={847} role="Analyst" />
-                    <UserActivityCard name="John Doe" queries={623} role="Admin" />
-                    <UserActivityCard name="Alice Johnson" queries={542} role="Reviewer" />
-                    <UserActivityCard name="Bob Smith" queries={312} role="Viewer" />
+            <Card>
+                <h3 className="font-semibold text-text-primary mb-4">Top Users</h3>
+                <div className="space-y-4">
+                    <UserActivityCard name={session?.user?.name || "User"} queries={623} role="Admin" />
+                    <UserActivityCard name="Sarah Chen" queries={482} role="Analyst" />
+                    <UserActivityCard name="Mike Ross" queries={356} role="Developer" />
+                    <UserActivityCard name="Alice Johnson" queries={298} role="Analyst" />
                 </div>
-            </div>
+            </Card>
         </div>
     );
 }
