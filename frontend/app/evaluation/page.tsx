@@ -10,6 +10,42 @@ import { cn } from '@/lib/utils';
 
 export default function Evaluation() {
     const [showNewEval, setShowNewEval] = useState(false);
+    const [evaluations, setEvaluations] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchEvaluations = async () => {
+        try {
+            const res = await fetch('/api/evaluation');
+            if (res.ok) {
+                const data = await res.json();
+                setEvaluations(data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch evaluations:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchEvaluations();
+    }, []);
+
+    const handleRunEvaluation = async () => {
+        try {
+            setShowNewEval(false);
+            // Optimistic update or just refresh
+            const res = await fetch('/api/evaluation', {
+                method: 'POST',
+                body: JSON.stringify({ model: 'Claims Processor v2', name: 'Manual Run' })
+            });
+            if (res.ok) {
+                fetchEvaluations();
+            }
+        } catch (error) {
+            console.error('Failed to run evaluation:', error);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -30,30 +66,23 @@ export default function Evaluation() {
 
             {/* Recent Evaluations */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <EvaluationCard
-                    id="#342"
-                    model="Claims Processor v2"
-                    status="completed"
-                    accuracy={94.2}
-                    date="2024-01-15"
-                    duration="12m 34s"
-                />
-                <EvaluationCard
-                    id="#341"
-                    model="Underwriting AI"
-                    status="running"
-                    accuracy={null}
-                    date="2024-01-15"
-                    duration="Running..."
-                />
-                <EvaluationCard
-                    id="#340"
-                    model="Credit Scorer v3"
-                    status="completed"
-                    accuracy={91.7}
-                    date="2024-01-14"
-                    duration="8m 12s"
-                />
+                {loading ? (
+                    <div className="col-span-3 text-center py-8 text-text-muted">Loading evaluations...</div>
+                ) : evaluations.length === 0 ? (
+                    <div className="col-span-3 text-center py-8 text-text-muted">No evaluations found. Run a new one to get started.</div>
+                ) : (
+                    evaluations.map((evalItem) => (
+                        <EvaluationCard
+                            key={evalItem.id}
+                            id={`#${evalItem.id.slice(-4)}`}
+                            model={evalItem.model}
+                            status={evalItem.status}
+                            accuracy={evalItem.accuracy}
+                            date={new Date(evalItem.createdAt).toLocaleDateString()}
+                            duration={evalItem.duration || 'N/A'}
+                        />
+                    ))
+                )}
             </div>
 
             {/* Metrics Comparison */}
@@ -188,7 +217,7 @@ export default function Evaluation() {
                             </div>
                             <div className="flex items-center justify-end gap-3 pt-4">
                                 <Button variant="tertiary" onClick={() => setShowNewEval(false)}>Cancel</Button>
-                                <Button variant="primary" icon={<Play className="w-4 h-4" />}>Start Evaluation</Button>
+                                <Button variant="primary" icon={<Play className="w-4 h-4" />} onClick={handleRunEvaluation}>Start Evaluation</Button>
                             </div>
                         </div>
                     </div>

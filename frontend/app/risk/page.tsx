@@ -19,40 +19,26 @@ interface RiskIncident {
     sla: string;
 }
 
-const mockIncidents: RiskIncident[] = [
-    {
-        id: '1',
-        title: 'Model drift detected in Claims Processor v2',
-        model: 'Claims Processor v2',
-        severity: 'critical',
-        status: 'open',
-        assignee: 'Sarah Chen',
-        createdDate: '2024-01-15',
-        sla: '2 hours'
-    },
-    {
-        id: '2',
-        title: 'Accuracy below threshold',
-        model: 'Underwriting AI',
-        severity: 'high',
-        status: 'in-progress',
-        assignee: 'John Doe',
-        createdDate: '2024-01-14',
-        sla: '1 day'
-    },
-    {
-        id: '3',
-        title: 'Missing explainability documentation',
-        model: 'Credit Scorer v3',
-        severity: 'medium',
-        status: 'open',
-        assignee: 'Alice Johnson',
-        createdDate: '2024-01-13',
-        sla: '5 days'
-    }
-];
-
 export default function Risk() {
+    const [incidents, setIncidents] = React.useState<RiskIncident[]>([]);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const fetchIncidents = async () => {
+            try {
+                const res = await fetch('/api/risk');
+                if (res.ok) {
+                    const data = await res.json();
+                    setIncidents(data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch incidents:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchIncidents();
+    }, []);
     const columns: Column<RiskIncident>[] = [
         {
             key: 'title',
@@ -106,9 +92,9 @@ export default function Risk() {
             width: '100px',
             render: (incident) => (
                 <span className={cn(
-                    incident.sla.includes('hour') ? 'text-danger-a20 font-medium' : 'text-text-primary'
+                    incident.sla?.includes('hour') ? 'text-danger-a20 font-medium' : 'text-text-primary'
                 )}>
-                    {incident.sla}
+                    {incident.sla || 'N/A'}
                 </span>
             )
         }
@@ -210,8 +196,8 @@ export default function Risk() {
                 </div>
                 <Table
                     columns={columns}
-                    data={mockIncidents}
-                    emptyMessage="No risk incidents found"
+                    data={incidents}
+                    emptyMessage={loading ? "Loading incidents..." : "No risk incidents found"}
                 />
             </div>
 

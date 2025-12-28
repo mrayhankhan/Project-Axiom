@@ -20,6 +20,8 @@ model User {
   sessions      Session[]
   chats         Chat[]
   documents     Document[]
+  riskIncidents RiskIncident[]
+  evaluations   Evaluation[]
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -123,4 +125,45 @@ model RiskAssessment {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model RiskIncident {
+  id          String   @id @default(cuid())
+  title       String
+  model       String
+  severity    String   // low, medium, high, critical
+  status      String   // open, in-progress, resolved
+  assignee    String?
+  sla         String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Evaluation {
+  id          String     @id @default(cuid())
+  model       String
+  status      String     // running, completed, failed
+  accuracy    Float?
+  precision   Float?
+  recall      Float?
+  f1          Float?
+  latency     Int?       // in ms
+  tokens      Int?
+  createdAt   DateTime   @default(now())
+  duration    String?
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testCases   TestCase[]
+}
+
+model TestCase {
+  id           String     @id @default(cuid())
+  query        String
+  expected     String
+  actual       String
+  match        Boolean
+  evaluationId String
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
 }
