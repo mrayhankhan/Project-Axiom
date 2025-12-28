@@ -8,19 +8,32 @@ import { Button } from '../ui/button';
 export const AuthCard = () => {
     const router = useRouter();
     const [isLoading, setIsLoading] = React.useState(false);
+    const [email, setEmail] = React.useState('');
+    const [password, setPassword] = React.useState('');
 
     const handleGoogleSignIn = async () => {
         setIsLoading(true);
         await signIn('google', { callbackUrl: '/dashboard' });
     };
 
-    const handleCredentialsSignIn = async () => {
+    const handleCredentialsSignIn = async (e: React.FormEvent) => {
+        e.preventDefault();
         setIsLoading(true);
-        await signIn('credentials', {
-            email: 'demo@example.com',
-            password: 'password',
+
+        const result = await signIn('credentials', {
+            email,
+            password,
+            redirect: false,
             callbackUrl: '/dashboard'
         });
+
+        if (result?.error) {
+            setIsLoading(false);
+            // You might want to show an error toast here
+            console.error("Login failed");
+        } else {
+            router.push('/dashboard');
+        }
     };
 
     return (
@@ -82,11 +95,31 @@ export const AuthCard = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3">
-                    <Button variant="secondary" className="w-full" onClick={handleCredentialsSignIn}>
-                        Sign in with Demo Account
+                <form onSubmit={handleCredentialsSignIn} className="space-y-4">
+                    <div>
+                        <input
+                            type="text"
+                            placeholder="Email or Username"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full px-4 py-3 rounded-lg bg-surface-a10 dark:bg-surface-a30 border border-surface-a30 focus:border-primary-a30 focus:ring-2 focus:ring-primary-a30/20 outline-none transition-all text-text-primary placeholder:text-text-muted"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-4 py-3 rounded-lg bg-surface-a10 dark:bg-surface-a30 border border-surface-a30 focus:border-primary-a30 focus:ring-2 focus:ring-primary-a30/20 outline-none transition-all text-text-primary placeholder:text-text-muted"
+                            required
+                        />
+                    </div>
+                    <Button type="submit" variant="primary" className="w-full" disabled={isLoading}>
+                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign In'}
                     </Button>
-                </div>
+                </form>
             </div>
 
             <p className="mt-8 text-center text-xs text-text-muted">
