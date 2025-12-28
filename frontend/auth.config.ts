@@ -31,11 +31,23 @@ export const authConfig = {
             if (token.sub && session.user) {
                 session.user.id = token.sub;
             }
+            // Force update name and image from token if available (fixes stale DB data)
+            if (token.name && session.user) {
+                session.user.name = token.name;
+            }
+            if (token.picture && session.user) {
+                session.user.image = token.picture;
+            }
             return session;
         },
-        async jwt({ token, user }) {
+        async jwt({ token, user, account, profile }) {
             if (user) {
                 token.sub = user.id;
+            }
+            // Capture profile data from Google
+            if (account?.provider === 'google' && profile) {
+                token.name = profile.name;
+                token.picture = profile.picture;
             }
             return token;
         }
