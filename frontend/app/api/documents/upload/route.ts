@@ -42,25 +42,26 @@ export async function POST(req: NextRequest) {
             .getPublicUrl(filePath);
 
         // 3. Create Document Record in DB
-        // First ensure we have a demo user if not exists (for testing without auth)
+        // First ensure we have a user record
         let user = await db.user.findFirst({ where: { id: userId } });
         if (!user) {
-            // Create a placeholder user if it doesn't exist (for development/demo)
-            // In production, this would be handled by the auth session
             try {
+                // Use session details if available, otherwise fallback to demo details
+                const userEmail = session?.user?.email || 'demo@example.com';
+                const userName = session?.user?.name || 'Demo User';
+
                 user = await db.user.upsert({
-                    where: { email: 'demo@example.com' },
+                    where: { email: userEmail },
                     update: {},
                     create: {
                         id: userId,
-                        email: 'demo@example.com',
-                        name: 'Demo User',
-                        role: 'admin'
+                        email: userEmail,
+                        name: userName,
+                        role: 'user'
                     }
                 });
             } catch (e) {
                 console.error("User creation error", e);
-                // If upsert fails, try to find again or just proceed if we can't create
             }
         }
 
